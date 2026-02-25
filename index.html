@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taller PETI 2027 — Herramientas en Vivo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1A2E4A;--teal:#0D7C8E;--orange:#E07B39;--purple:#6D28D9;
+    --green:#16A34A;--yellow:#CA8A04;--red:#DC2626;--amber:#D97706;
+    --bg:#F0F4F8;--card:#FFFFFF;--border:#E2E8F0;--text:#1E293B;--muted:#64748B;
+    --green-bg:#F0FDF4;--green-bd:#86EFAC;
+    --yellow-bg:#FEFCE8;--yellow-bd:#FDE047;
+    --red-bg:#FFF1F2;--red-bd:#FCA5A5;
+    --amber-bg:#FFF7ED;--amber-bd:#FCD34D;
+    --purple-bg:#F5F3FF;--purple-bd:#C4B5FD;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* WELCOME */
+  .welcome-overlay{position:fixed;inset:0;background:rgba(26,46,74,.85);z-index:999;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .welcome-box{background:#fff;border-radius:20px;padding:40px 44px;width:460px;max-width:94vw;
+    box-shadow:0 24px 60px rgba(0,0,0,.25);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes popIn{from{transform:scale(.88);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .welcome-box h2{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .welcome-box .sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6;}
+  .welcome-box label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.06em;display:block;margin-bottom:8px;}
+  .welcome-input{width:100%;border:2px solid var(--border);border-radius:10px;padding:12px 16px;
+    font-family:inherit;font-size:15px;font-weight:600;color:var(--navy);outline:none;transition:border-color .2s;}
+  .welcome-input:focus{border-color:var(--teal);}
+  .welcome-btn{width:100%;margin-top:20px;background:var(--navy);color:#fff;border:none;
+    border-radius:10px;padding:13px;font-family:inherit;font-size:15px;font-weight:700;
+    cursor:pointer;transition:background .2s;}
+  .welcome-btn:hover{background:var(--teal);}
+  .welcome-note{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:var(--navy);display:flex;align-items:center;
+    padding:0 24px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
+  .nav-brand{font-size:13px;font-weight:700;color:#fff;padding:14px 20px 14px 0;
+    border-right:1px solid rgba(255,255,255,.15);margin-right:8px;white-space:nowrap;}
+  .nav-brand span{color:var(--orange);}
+  .nav-tabs{display:flex;}
+  .tab-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.55);
+    font-family:inherit;font-size:13px;font-weight:500;padding:16px 18px;position:relative;
+    transition:color .2s;white-space:nowrap;}
+  .tab-btn:hover{color:rgba(255,255,255,.85);}
+  .tab-btn.active{color:#fff;}
+  .tab-btn.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+    background:var(--orange);border-radius:3px 3px 0 0;}
+  .tab-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+    border-radius:50%;background:rgba(255,255,255,.15);font-size:11px;font-weight:700;margin-right:7px;}
+  .tab-btn.active .tab-num{background:var(--orange);}
+  .nav-user{font-size:12px;color:rgba(255,255,255,.65);margin-left:auto;padding-left:20px;
+    border-left:1px solid rgba(255,255,255,.15);white-space:nowrap;}
+  .nav-user strong{color:#fff;}
+
+  /* SAVE */
+  .save-bar{position:fixed;bottom:20px;left:20px;z-index:500;background:var(--navy);color:#fff;
+    padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;display:flex;
+    align-items:center;gap:8px;opacity:0;transition:opacity .4s;pointer-events:none;}
+  .save-bar.show{opacity:1;}
+  .save-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+    animation:pulse 1s ease infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  /* MAIN */
+  main{max-width:1200px;margin:0 auto;padding:28px 24px;}
+  .page{display:none;}
+  .page.active{display:block;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  /* HEADER */
+  .page-header{background:var(--card);border-radius:14px;padding:22px 28px;
+    border-left:5px solid var(--teal);margin-bottom:24px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 1px 4px rgba(0,0,0,.07);}
+  .page-header h1{font-size:20px;font-weight:700;color:var(--navy);}
+  .page-header p{font-size:13px;color:var(--muted);margin-top:4px;}
+  .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+    background:var(--teal);color:#fff;white-space:nowrap;}
+  .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px;}
+  .progress-fill{height:100%;border-radius:2px;background:var(--orange);transition:width .4s ease;}
+
+  /* CARDS */
+  .card{background:var(--card);border-radius:12px;padding:20px;
+    box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid var(--border);}
+  .card-title{font-size:12px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;}
+
+  /* EXPORT BLOCK */
+  .export-block{background:var(--card);border:2px dashed var(--border);border-radius:12px;
+    padding:18px 24px;margin-top:20px;display:flex;align-items:center;
+    justify-content:space-between;gap:16px;}
+  .export-block p{font-size:13px;color:var(--muted);margin-top:3px;}
+  .export-block strong{font-size:14px;color:var(--navy);}
+
+  /* B1 */
+  .dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+  .dim-item{background:#fff;border:1.5px solid var(--border);border-radius:10px;
+    padding:14px 16px;transition:all .2s;}
+  .dim-name{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px;}
+  .sem-btns{display:flex;gap:6px;}
+  .sem-btn{flex:1;border:none;border-radius:7px;padding:7px 4px;cursor:pointer;
+    font-family:inherit;font-size:12px;font-weight:600;transition:all .18s;opacity:.55;}
+  .sem-btn:hover{opacity:.85;transform:translateY(-1px);}
+  .sem-btn.selected{opacity:1;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.15);}
+  .sem-btn.green{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-bd);}
+  .sem-btn.yellow{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-bd);}
+  .sem-btn.red{background:var(--red-bg);color:var(--red);border:1.5px solid var(--red-bd);}
+  .sem-btn.green.selected{background:var(--green);color:#fff;border-color:var(--green);}
+  .sem-btn.yellow.selected{background:var(--yellow);color:#fff;border-color:var(--yellow);}
+  .sem-btn.red.selected{background:var(--red);color:#fff;border-color:var(--red);}
+  .tapete-result{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .zone{border-radius:12px;padding:16px;min-height:160px;border:2px dashed var(--border);transition:all .3s;}
+  .zone-header{font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;}
+  .zone.z-green{background:var(--green-bg);border-color:var(--green-bd);}
+  .zone.z-yellow{background:var(--yellow-bg);border-color:var(--yellow-bd);}
+  .zone.z-red{background:var(--red-bg);border-color:var(--red-bd);}
+  .zone.z-green .zone-header{color:var(--green);}
+  .zone.z-yellow .zone-header{color:var(--yellow);}
+  .zone.z-red .zone-header{color:var(--red);}
+  .zone-chip{display:inline-block;font-size:12px;font-weight:600;padding:5px 10px;
+    border-radius:6px;margin:3px;animation:chipIn .25s ease;}
+  @keyframes chipIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .zone.z-green .zone-chip{background:#dcfce7;color:var(--green);}
+  .zone.z-yellow .zone-chip{background:#fef9c3;color:var(--yellow);}
+  .zone.z-red .zone-chip{background:#fee2e2;color:var(--red);}
+  .empty-hint{font-size:11px;color:#bbb;text-align:center;margin-top:18px;font-style:italic;}
+  .ev-row{display:flex;align-items:flex-start;gap:10px;background:#fff;
+    border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+  .ev-label{font-size:12px;font-weight:600;min-width:140px;color:var(--muted);}
+  .ev-input{flex:1;border:none;outline:none;font-family:inherit;font-size:13px;
+    color:var(--text);background:transparent;resize:none;}
+
+  /* B2 */
+  .cap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .cap-item{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px;transition:all .2s;}
+  .cap-name{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+  .cap-id{font-size:11px;font-family:'DM Mono',monospace;color:var(--teal);margin-bottom:10px;}
+  .sticker-btns{display:flex;gap:5px;}
+  .sticker-btn{flex:1;border:none;border-radius:6px;padding:6px 3px;cursor:pointer;
+    font-family:inherit;font-size:11px;font-weight:600;transition:all .18s;opacity:.5;line-height:1.3;}
+  .sticker-btn:hover{opacity:.8;}
+  .sticker-btn.selected{opacity:1;box-shadow:0 2px 8px rgba(0,0,0,.15);transform:translateY(-1px);}
+  .sticker-btn.s-green{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-bd);}
+  .sticker-btn.s-yellow{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-bd);}
+  .sticker-btn.s-amber{background:var(--amber-bg);color:var(--amber);border:1.5px solid var(--amber-bd);}
+  .sticker-btn.s-red{background:var(--red-bg);color:var(--red);border:1.5px solid var(--red-bd);}
+  .sticker-btn.s-green.selected{background:var(--green);color:#fff;border-color:var(--green);}
+  .sticker-btn.s-yellow.selected{background:var(--yellow);color:#fff;border-color:var(--yellow);}
+  .sticker-btn.s-amber.selected{background:var(--amber);color:#fff;border-color:var(--amber);}
+  .sticker-btn.s-red.selected{background:var(--red);color:#fff;border-color:var(--red);}
+  .cap-obs-input{width:100%;border:1px solid var(--border);border-radius:6px;
+    padding:6px 10px;font-family:inherit;font-size:12px;color:var(--text);
+    background:#fafafa;resize:none;outline:none;transition:border-color .2s;margin-top:8px;}
+  .cap-obs-input:focus{border-color:var(--orange);background:#fff;}
+  .summary-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+  .sum-label{font-size:12px;font-weight:600;min-width:180px;color:var(--navy);}
+  .sum-bar{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
+  .sum-fill{height:100%;border-radius:5px;transition:width .4s ease;}
+  .sum-badge{font-size:11px;font-weight:700;min-width:80px;text-align:right;}
+
+  /* B3 */
+  .brecha-card{background:#fff;border-radius:12px;overflow:hidden;
+    border:1.5px solid var(--purple-bd);margin-bottom:16px;
+    box-shadow:0 2px 8px rgba(109,40,217,.08);}
+  .brecha-header{background:var(--purple-bg);padding:12px 18px;display:flex;
+    align-items:center;gap:10px;border-bottom:1.5px solid var(--purple-bd);}
+  .brecha-num{width:28px;height:28px;border-radius:50%;background:var(--purple);color:#fff;
+    font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brecha-header-title{font-size:14px;font-weight:700;color:var(--purple);}
+  .brecha-body{padding:18px;}
+  .brecha-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+  .field-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  .field-select,.field-input{width:100%;border:1.5px solid var(--border);border-radius:8px;
+    padding:9px 12px;font-family:inherit;font-size:13px;color:var(--text);
+    background:#fafafa;outline:none;transition:border-color .2s,box-shadow .2s;appearance:none;}
+  .field-select:focus,.field-input:focus{border-color:var(--purple);background:#fff;
+    box-shadow:0 0 0 3px rgba(109,40,217,.1);}
+  .brecha-preview{background:var(--purple-bg);border:1.5px solid var(--purple-bd);
+    border-radius:10px;padding:14px 16px;margin-top:12px;}
+  .brecha-preview-label{font-size:11px;font-weight:700;color:var(--purple);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .brecha-preview-text{font-size:14px;color:var(--navy);line-height:1.6;font-style:italic;}
+  .brecha-preview-text .fill{color:var(--purple);font-weight:700;font-style:normal;
+    background:rgba(109,40,217,.1);padding:1px 5px;border-radius:4px;}
+  .brecha-preview-text .blank{color:#bbb;}
+  .add-brecha-btn{width:100%;padding:13px;border:2px dashed var(--purple-bd);border-radius:12px;
+    background:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;
+    color:var(--purple);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .add-brecha-btn:hover{background:var(--purple-bg);border-style:solid;}
+
+  /* B4 */
+  .relato-info{background:var(--card);border-radius:10px;padding:14px 18px;
+    border:1px solid var(--border);margin-bottom:20px;display:flex;gap:24px;align-items:center;}
+  .relato-info label{font-size:11px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;}
+  .momento-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .momento-card{background:#fff;border-radius:12px;overflow:hidden;
+    border:1.5px solid var(--green-bd);box-shadow:0 2px 6px rgba(22,163,74,.08);}
+  .momento-hdr{background:var(--green);padding:10px 14px;display:flex;align-items:center;gap:8px;}
+  .momento-icon{font-size:18px;}
+  .momento-title{font-size:13px;font-weight:700;color:#fff;}
+  .momento-body{padding:14px;}
+  .momento-q{font-size:12px;color:var(--muted);margin-bottom:10px;font-style:italic;line-height:1.5;}
+  .momento-name-input{width:100%;border:1.5px solid var(--border);border-radius:7px;
+    padding:8px 11px;font-family:inherit;font-size:13px;font-weight:600;color:var(--navy);
+    background:var(--green-bg);outline:none;transition:all .2s;}
+  .momento-name-input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px rgba(22,163,74,.1);}
+  .momento-nombre{font-size:12px;font-weight:700;margin-top:10px;padding:6px 10px;
+    border-radius:6px;text-align:center;}
+  .momento-nombre.asignado{background:var(--green);color:#fff;}
+  .momento-nombre.vacio{background:var(--green-bg);color:var(--muted);border:1px dashed var(--green-bd);}
+  .relato-escena{background:#fff;border:1.5px solid var(--green-bd);border-radius:12px;
+    padding:18px;margin-top:20px;}
+  .relato-escena h3{font-size:14px;font-weight:700;color:var(--green);margin-bottom:12px;}
+  .escena-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;
+    padding:10px 14px;font-family:inherit;font-size:13px;line-height:1.7;
+    color:var(--text);background:var(--green-bg);outline:none;resize:vertical;
+    min-height:100px;transition:border-color .2s;}
+  .escena-textarea:focus{border-color:var(--green);background:#fff;}
+
+  /* BTNS */
+  .reset-btn{background:none;border:1px solid var(--border);border-radius:8px;
+    padding:7px 14px;cursor:pointer;font-family:inherit;font-size:12px;color:var(--muted);transition:all .2s;}
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .export-btn{background:var(--navy);color:#fff;border:none;border-radius:8px;
+    padding:9px 18px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;
+    transition:background .2s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .export-btn:hover{background:var(--teal);}
+  .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--navy);color:#fff;
+    padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;
+    box-shadow:0 4px 20px rgba(0,0,0,.25);transform:translateY(80px);opacity:0;
+    transition:all .3s ease;pointer-events:none;max-width:320px;}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  @media(max-width:768px){
+    .tapete-result,.momento-grid,.brecha-fields{grid-template-columns:1fr;}
+    .dim-grid,.cap-grid{grid-template-columns:1fr;}
+    .export-block{flex-direction:column;}
+    .relato-info{flex-direction:column;}
+    .nav-user{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="welcome-overlay" id="welcome-overlay">
+  <div class="welcome-box">
+    <h2>👋 Bienvenido/a al Taller PETI 2027</h2>
+    <p class="sub">Escriba su nombre para comenzar. Sus respuestas se guardarán automáticamente en este navegador. Al finalizar cada bloque podrá exportar un resumen y enviárselo a la facilitadora por Teams.</p>
+    <label for="nombre-input">Su nombre completo</label>
+    <input class="welcome-input" id="nombre-input" type="text" placeholder="Ej: María Rodríguez"
+      onkeydown="if(event.key==='Enter')startApp()">
+    <button class="welcome-btn" onclick="startApp()">Entrar al taller →</button>
+    <p class="welcome-note">💾 Sus datos se guardan solo en este dispositivo. Nadie los ve hasta que usted los exporte.</p>
+  </div>
+</div>
+
+<nav>
+  <div class="nav-brand">PETI <span>2027</span> · Taller Virtual</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab(0)"><span class="tab-num">1</span>Diagnóstico</button>
+    <button class="tab-btn" onclick="showTab(1)"><span class="tab-num">2</span>Capacidades</button>
+    <button class="tab-btn" onclick="showTab(2)"><span class="tab-num">3</span>Brechas</button>
+    <button class="tab-btn" onclick="showTab(3)"><span class="tab-num">4</span>Relato</button>
+  </div>
+  <div class="nav-user" id="nav-user"></div>
+</nav>
+
+<main>
+
+<!-- B1 -->
+<div class="page active" id="page-0">
+  <div class="page-header" style="border-left-color:var(--teal)">
+    <div>
+      <h1>Bloque 1 · Diagnóstico del PETI</h1>
+      <p>Asigne el nivel semáforo a cada dimensión según su percepción</p>
+      <div class="progress-bar"><div class="progress-fill" id="prog1" style="width:0%"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="resetBloque1()">↺ Reiniciar</button>
+      <span class="badge" style="background:var(--teal)">6 dimensiones</span>
+    </div>
+  </div>
+  <div class="dim-grid" id="dim-grid"></div>
+  <div class="card">
+    <div class="card-title">Tapete de resultados</div>
+    <div class="tapete-result">
+      <div class="zone z-green"><div class="zone-header">🟢 Desempeño Adecuado</div><div id="zone-green"><div class="empty-hint">Ninguna aún</div></div></div>
+      <div class="zone z-yellow"><div class="zone-header">🟡 Parcial / En Riesgo</div><div id="zone-yellow"><div class="empty-hint">Ninguna aún</div></div></div>
+      <div class="zone z-red"><div class="zone-header">🔴 Crítico</div><div id="zone-red"><div class="empty-hint">Ninguna aún</div></div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Evidencias (dimensiones en amarillo o rojo)</div>
+    <div id="evidencias-area"></div>
+  </div>
+  <div class="export-block">
+    <div><strong>¿Terminó el Bloque 1?</strong><p>Descargue su resumen y envíeselo a la facilitadora por el chat de Teams.</p></div>
+    <button class="export-btn" onclick="exportBloque(1)">⬇ Exportar Bloque 1</button>
+  </div>
+</div>
+
+<!-- B2 -->
+<div class="page" id="page-1">
+  <div class="page-header" style="border-left-color:var(--orange)">
+    <div>
+      <h1>Bloque 2 · Galería de Capacidades</h1>
+      <p>Seleccione el nivel real de cada capacidad e identifique obstáculos</p>
+      <div class="progress-bar"><div class="progress-fill" id="prog2" style="width:0%;background:var(--orange)"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="resetBloque2()">↺ Reiniciar</button>
+      <span class="badge" style="background:var(--orange)">12 capacidades</span>
+    </div>
+  </div>
+  <div class="cap-grid" id="cap-grid"></div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Resumen de resultados</div>
+    <div id="galeria-summary-content"><p style="color:var(--muted);font-size:13px;font-style:italic">Los resultados aparecerán aquí a medida que evalúe las capacidades.</p></div>
+  </div>
+  <div class="export-block">
+    <div><strong>¿Terminó el Bloque 2?</strong><p>Descargue su resumen y envíeselo a la facilitadora por el chat de Teams.</p></div>
+    <button class="export-btn" onclick="exportBloque(2)">⬇ Exportar Bloque 2</button>
+  </div>
+</div>
+
+<!-- B3 -->
+<div class="page" id="page-2">
+  <div class="page-header" style="border-left-color:var(--purple)">
+    <div>
+      <h1>Bloque 3 · Formulación de Brechas</h1>
+      <p>Complete los campos — la brecha se redacta automáticamente</p>
+    </div>
+    <span class="badge" style="background:var(--purple)">Plantilla automática</span>
+  </div>
+  <div id="brechas-container"></div>
+  <button class="add-brecha-btn" onclick="addBrecha()">＋ Agregar otra brecha</button>
+  <div class="export-block" style="margin-top:20px">
+    <div><strong>¿Terminó el Bloque 3?</strong><p>Descargue sus brechas formuladas y envíeselas a la facilitadora.</p></div>
+    <button class="export-btn" onclick="exportBloque(3)">⬇ Exportar Bloque 3</button>
+  </div>
+</div>
+
+<!-- B4 -->
+<div class="page" id="page-3">
+  <div class="page-header" style="border-left-color:var(--green)">
+    <div>
+      <h1>Bloque 4 · Relato Estratégico</h1>
+      <p>Construya el relato en vivo — narre su momento cuando le corresponda</p>
+    </div>
+    <span class="badge" style="background:var(--green)">6 momentos</span>
+  </div>
+  <div class="relato-info">
+    <div>
+      <label>Brecha que trabaja este relato</label>
+      <select class="field-select" id="brecha-sel" onchange="updateBrecha()" style="min-width:240px">
+        <option value="">— seleccionar brecha —</option>
+      </select>
+    </div>
+    <div style="flex:1">
+      <label>Brecha seleccionada</label>
+      <div id="brecha-texto" style="font-size:13px;color:var(--muted);font-style:italic">Seleccione una brecha del Bloque 3</div>
+    </div>
+  </div>
+  <div class="momento-grid" id="momento-grid"></div>
+  <div class="relato-escena">
+    <h3>📖 Notas del relato</h3>
+    <textarea class="escena-textarea" id="relato-texto"
+      placeholder="Escriba aquí sus notas mientras narra su momento o escucha el relato del grupo..."
+      oninput="debouncedSave()"></textarea>
+  </div>
+  <div class="export-block">
+    <div><strong>¿Terminó el Bloque 4?</strong><p>Descargue el resumen completo de todos los bloques.</p></div>
+    <button class="export-btn" onclick="exportBloque(4)">⬇ Exportar resumen completo</button>
+  </div>
+</div>
+
+</main>
+
+<div class="save-bar" id="save-bar"><div class="save-dot"></div>Guardado automáticamente</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DIMS=[
+  {id:"alin",name:"Alineación Estratégica",short:"Alineación"},
+  {id:"ejec",name:"Cumplimiento y Ejecución",short:"Cumplimiento"},
+  {id:"gob",name:"Gobierno y Gestión",short:"Gobierno"},
+  {id:"arq",name:"Arquitectura y Capacidad TI",short:"Arquitectura"},
+  {id:"info",name:"Gestión de Información",short:"Información"},
+  {id:"tal",name:"Talento y Capacidad Operativa",short:"Talento"},
+];
+const CAPS=[
+  {id:"in01",code:"IN-01",name:"Gobierno de Datos"},
+  {id:"in02",code:"IN-02",name:"Análisis de Información"},
+  {id:"in03",code:"IN-03",name:"Interoperabilidad de Información"},
+  {id:"in04",code:"IN-04",name:"Fábrica de Software / DevOps"},
+  {id:"in05",code:"IN-05",name:"Tecnologías Emergentes (pilotos)"},
+  {id:"in06",code:"IN-06",name:"Arquitectura Empresarial TI"},
+  {id:"in07",code:"IN-07",name:"Modelo de Gobierno y Gestión TI"},
+  {id:"in08",code:"IN-08",name:"Seguridad Digital"},
+  {id:"in09",code:"IN-09",name:"SI Planeación Estratégica y Operativa"},
+  {id:"in10",code:"IN-10",name:"Infraestructura Tecnológica"},
+  {id:"in11",code:"IN-11",name:"Desarrollo e Impl. de Sistemas"},
+  {id:"in12",code:"IN-12",name:"Sistema Gestión Administrativa y RRHH"},
+];
+const MOMENTOS=[
+  {n:"1",icon:"⚡",title:"Punto de Quiebre",q:"¿Qué situación crítica evidenció que la brecha ya no podía continuar?"},
+  {n:"2",icon:"🎯",title:"Decisión Estratégica",q:"¿Qué decisión estructural tomó la OTI para cerrar la brecha?"},
+  {n:"3",icon:"🧱",title:"Resistencia",q:"¿Qué resistencia institucional apareció y cómo fue gestionada?"},
+  {n:"4",icon:"💡",title:"Apuesta Estructural",q:"¿En qué se invirtió para que el cambio fuera sostenible?"},
+  {n:"5",icon:"🔄",title:"Cambio Implementado",q:"¿Qué cambió permanentemente en la forma de trabajar?"},
+  {n:"6",icon:"🏆",title:"Resultado Logrado",q:"¿Qué mejora concreta se evidenció en la capacidad impactada?"},
+];
+const DIM_OPTS=["— seleccionar —",...DIMS.map(d=>d.name)];
+const CAP_OPTS=["— seleccionar —",...CAPS.map(c=>`${c.code}: ${c.name}`)];
+const NLV={green:"🟢 Adecuado",yellow:"🟡 Parcial",red:"🔴 Crítico",amber:"🟠 Frágil"};
+const CLV={green:"🟢 Consolidada",yellow:"🟡 Funcional",amber:"🟠 Frágil",red:"🔴 Declarativa"};
+const SK='peti2027_v3';
+
+let userName='';
+let state={semaforo:{},evidencias:{},capacidades:{},obstaculos:{},brechas:[],brechaCount:0,momentos:{},relatoTexto:''};
+
+// STORAGE
+function persist(){
+  try{
+    state.brechas.forEach(b=>{
+      b.dim=document.getElementById(`b${b.id}-dim`)?.value||b.dim;
+      b.cap=document.getElementById(`b${b.id}-cap`)?.value||b.cap;
+      b.causa=document.getElementById(`b${b.id}-causa`)?.value||b.causa;
+      b.capinst=document.getElementById(`b${b.id}-capinst`)?.value||b.capinst;
+    });
+    DIMS.forEach(d=>{const e=document.getElementById(`ev-input-${d.id}`);if(e)state.evidencias[d.id]=e.value;});
+    CAPS.forEach(c=>{const e=document.getElementById(`obs-input-${c.id}`);if(e)state.obstaculos[c.id]=e.value;});
+    state.relatoTexto=document.getElementById('relato-texto')?.value||'';
+    localStorage.setItem(SK,JSON.stringify({userName,state}));
+    flashSave();
+  }catch(e){console.warn(e);}
+}
+
+function restore(){
+  try{
+    const raw=localStorage.getItem(SK);
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    userName=d.userName||'';
+    state={...state,...d.state};
+    return true;
+  }catch(e){return false;}
+}
+
+let saveTimer;
+function debouncedSave(){clearTimeout(saveTimer);saveTimer=setTimeout(persist,700);}
+
+function flashSave(){
+  const el=document.getElementById('save-bar');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),1800);
+}
+
+// WELCOME
+function startApp(){
+  const v=document.getElementById('nombre-input').value.trim();
+  if(!v){document.getElementById('nombre-input').focus();return;}
+  userName=v;
+  document.getElementById('welcome-overlay').style.display='none';
+  document.getElementById('nav-user').innerHTML=`👤 <strong>${userName}</strong>`;
+  persist();
+  renderAll();
+}
+
+function renderAll(){initB1();restoreB1();initB2();restoreB2();restoreBrechas();initB4();restoreB4();}
+
+// TABS
+function showTab(i){
+  document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  if(i===3)refreshBrechaSel();
+}
+
+// B1
+function initB1(){
+  document.getElementById('dim-grid').innerHTML=DIMS.map(d=>`
+    <div class="dim-item" id="dim-${d.id}">
+      <div class="dim-name">${d.name}</div>
+      <div class="sem-btns">
+        <button class="sem-btn green"  onclick="setSem('${d.id}','green')">🟢 Adecuado</button>
+        <button class="sem-btn yellow" onclick="setSem('${d.id}','yellow')">🟡 Parcial</button>
+        <button class="sem-btn red"    onclick="setSem('${d.id}','red')">🔴 Crítico</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('evidencias-area').innerHTML=DIMS.map(d=>`
+    <div class="ev-row" id="ev-row-${d.id}" style="display:none">
+      <span class="ev-label">${d.short}</span>
+      <textarea class="ev-input" id="ev-input-${d.id}" rows="1" placeholder="Evidencia concreta..."
+        oninput="state.evidencias['${d.id}']=this.value;debouncedSave()"></textarea>
+    </div>`).join('');
+}
+
+function restoreB1(){
+  Object.entries(state.semaforo).forEach(([id,lv])=>applyDimStyle(id,lv));
+  DIMS.forEach(d=>{
+    const el=document.getElementById(`ev-input-${d.id}`);
+    if(el&&state.evidencias[d.id])el.value=state.evidencias[d.id];
+    const row=document.getElementById(`ev-row-${d.id}`);
+    const lv=state.semaforo[d.id];
+    if(row)row.style.display=(lv==='yellow'||lv==='red')?'flex':'none';
+  });
+  updateTapete();
+  document.getElementById('prog1').style.width=`${Object.keys(state.semaforo).length/6*100}%`;
+}
+
+function setSem(id,lv){
+  state.semaforo[id]=lv;
+  applyDimStyle(id,lv);
+  const row=document.getElementById(`ev-row-${id}`);
+  if(row)row.style.display=(lv==='yellow'||lv==='red')?'flex':'none';
+  updateTapete();
+  document.getElementById('prog1').style.width=`${Object.keys(state.semaforo).length/6*100}%`;
+  debouncedSave();
+}
+
+function applyDimStyle(id,lv){
+  const el=document.getElementById(`dim-${id}`);if(!el)return;
+  el.querySelectorAll('.sem-btn').forEach(b=>b.classList.remove('selected'));
+  el.querySelector(`.sem-btn.${lv}`)?.classList.add('selected');
+  const bgs={green:'var(--green-bg)',yellow:'var(--yellow-bg)',red:'var(--red-bg)'};
+  const bds={green:'var(--green-bd)',yellow:'var(--yellow-bd)',red:'var(--red-bd)'};
+  el.style.background=bgs[lv];el.style.borderColor=bds[lv];
+}
+
+function updateTapete(){
+  ['green','yellow','red'].forEach(color=>{
+    const zone=document.getElementById(`zone-${color}`);
+    const dims=DIMS.filter(d=>state.semaforo[d.id]===color);
+    zone.innerHTML=dims.length?dims.map(d=>`<span class="zone-chip">${d.short}</span>`).join(''):'<div class="empty-hint">Ninguna aún</div>';
+  });
+}
+
+function resetBloque1(){state.semaforo={};state.evidencias={};initB1();updateTapete();document.getElementById('prog1').style.width='0%';persist();showToast('Bloque 1 reiniciado');}
+
+// B2
+function initB2(){
+  document.getElementById('cap-grid').innerHTML=CAPS.map(c=>`
+    <div class="cap-item" id="cap-${c.id}">
+      <div class="cap-id">${c.code}</div>
+      <div class="cap-name">${c.name}</div>
+      <div class="sticker-btns">
+        <button class="sticker-btn s-green"  onclick="setCap('${c.id}','green')">🟢 Consolidada</button>
+        <button class="sticker-btn s-yellow" onclick="setCap('${c.id}','yellow')">🟡 Funcional</button>
+        <button class="sticker-btn s-amber"  onclick="setCap('${c.id}','amber')">🟠 Frágil</button>
+        <button class="sticker-btn s-red"    onclick="setCap('${c.id}','red')">🔴 Declarativa</button>
+      </div>
+      <div id="obs-row-${c.id}" style="display:none">
+        <textarea class="cap-obs-input" id="obs-input-${c.id}" rows="2" placeholder="Obstáculo principal..."
+          oninput="state.obstaculos['${c.id}']=this.value;debouncedSave()"></textarea>
+      </div>
+    </div>`).join('');
+}
+
+function restoreB2(){
+  Object.entries(state.capacidades).forEach(([id,lv])=>applyCapStyle(id,lv));
+  CAPS.forEach(c=>{
+    const el=document.getElementById(`obs-input-${c.id}`);
+    if(el&&state.obstaculos[c.id])el.value=state.obstaculos[c.id];
+    const row=document.getElementById(`obs-row-${c.id}`);
+    const lv=state.capacidades[c.id];
+    if(row)row.style.display=(lv==='amber'||lv==='red')?'block':'none';
+  });
+  document.getElementById('prog2').style.width=`${Object.keys(state.capacidades).length/12*100}%`;
+  updateSummary();
+}
+
+function setCap(id,lv){
+  state.capacidades[id]=lv;applyCapStyle(id,lv);
+  const row=document.getElementById(`obs-row-${id}`);
+  if(row)row.style.display=(lv==='amber'||lv==='red')?'block':'none';
+  document.getElementById('prog2').style.width=`${Object.keys(state.capacidades).length/12*100}%`;
+  updateSummary();debouncedSave();
+}
+
+function applyCapStyle(id,lv){
+  const el=document.getElementById(`cap-${id}`);if(!el)return;
+  el.querySelectorAll('.sticker-btn').forEach(b=>b.classList.remove('selected'));
+  el.querySelector(`.sticker-btn.s-${lv}`)?.classList.add('selected');
+  const bgs={green:'var(--green-bg)',yellow:'var(--yellow-bg)',amber:'var(--amber-bg)',red:'var(--red-bg)'};
+  const bds={green:'var(--green-bd)',yellow:'var(--yellow-bd)',amber:'var(--amber-bd)',red:'var(--red-bd)'};
+  el.style.background=bgs[lv];el.style.borderColor=bds[lv];
+}
+
+function updateSummary(){
+  const c={green:0,yellow:0,amber:0,red:0};
+  Object.values(state.capacidades).forEach(v=>c[v]++);
+  if(!Object.keys(state.capacidades).length)return;
+  document.getElementById('galeria-summary-content').innerHTML=
+    [{k:'green',l:'🟢 Consolidadas',col:'var(--green)'},
+     {k:'yellow',l:'🟡 Funcionales',col:'var(--yellow)'},
+     {k:'amber',l:'🟠 Frágiles',col:'var(--amber)'},
+     {k:'red',l:'🔴 Declarativas',col:'var(--red)'}]
+    .map(x=>`<div class="summary-row">
+      <span class="sum-label">${x.l}</span>
+      <div class="sum-bar"><div class="sum-fill" style="width:${c[x.k]/12*100}%;background:${x.col}"></div></div>
+      <span class="sum-badge" style="color:${x.col}">${c[x.k]}/12</span>
+    </div>`).join('');
+}
+
+function resetBloque2(){state.capacidades={};state.obstaculos={};initB2();
+  document.getElementById('prog2').style.width='0%';
+  document.getElementById('galeria-summary-content').innerHTML='<p style="color:var(--muted);font-size:13px;font-style:italic">Los resultados aparecerán aquí a medida que evalúe las capacidades.</p>';
+  persist();showToast('Bloque 2 reiniciado');}
+
+// B3
+function addBrecha(restored){
+  state.brechaCount++;
+  const id=state.brechaCount;
+  const div=document.createElement('div');
+  div.className='brecha-card';div.id=`brecha-${id}`;
+  div.innerHTML=`
+    <div class="brecha-header">
+      <div class="brecha-num">${id}</div>
+      <div class="brecha-header-title">Brecha ${id}</div>
+      <button onclick="removeBrecha(${id})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px">✕</button>
+    </div>
+    <div class="brecha-body">
+      <div class="brecha-fields">
+        <div class="field-group"><label>Dimensión</label>
+          <select class="field-select" id="b${id}-dim" onchange="previewB(${id});debouncedSave()">
+            ${DIM_OPTS.map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="field-group"><label>Capacidad afectada (PETI)</label>
+          <select class="field-select" id="b${id}-cap" onchange="previewB(${id});debouncedSave()">
+            ${CAP_OPTS.map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="field-group"><label>Causa estructural</label>
+          <input class="field-input" id="b${id}-causa" placeholder="Ej: ausencia de modelo formal..."
+            oninput="previewB(${id});debouncedSave()"></div>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <label>Capacidad institucional impactada</label>
+        <input class="field-input" id="b${id}-capinst" placeholder="Ej: gestionar proyectos de inversión en TI..."
+          oninput="previewB(${id});debouncedSave()" style="margin-bottom:10px"></div>
+      <div class="brecha-preview" id="preview-${id}">
+        <div class="brecha-preview-label">📝 Brecha formulada</div>
+        <div class="brecha-preview-text" id="ptext-${id}"><span class="blank">Complete los campos...</span></div>
+      </div>
+    </div>`;
+  document.getElementById('brechas-container').appendChild(div);
+  if(!restored)state.brechas.push({id,dim:'',cap:'',causa:'',capinst:''});
+}
+
+function restoreBrechas(){
+  state.brechaCount=0;
+  document.getElementById('brechas-container').innerHTML='';
+  const saved=[...state.brechas];
+  state.brechas=[];
+  if(!saved.length){addBrecha();addBrecha();return;}
+  saved.forEach(b=>{
+    state.brechaCount=b.id-1;
+    addBrecha(true);
+    state.brechas.push(b);
+    setTimeout(()=>{
+      const set=(sel,val)=>{const el=document.getElementById(sel);if(el)el.value=val||'';};
+      set(`b${b.id}-dim`,b.dim);set(`b${b.id}-cap`,b.cap);
+      set(`b${b.id}-causa`,b.causa);set(`b${b.id}-capinst`,b.capinst);
+      previewB(b.id);
+    },0);
+  });
+}
+
+function removeBrecha(id){
+  document.getElementById(`brecha-${id}`).remove();
+  state.brechas=state.brechas.filter(b=>b.id!==id);
+  debouncedSave();
+}
+
+function previewB(id){
+  const dim=document.getElementById(`b${id}-dim`)?.value||'';
+  const causa=document.getElementById(`b${id}-causa`)?.value||'';
+  const capinst=document.getElementById(`b${id}-capinst`)?.value||'';
+  const b=state.brechas.find(x=>x.id===id);
+  if(b){b.dim=dim;b.cap=document.getElementById(`b${id}-cap`)?.value||'';b.causa=causa;b.capinst=capinst;}
+  const el=document.getElementById(`ptext-${id}`);if(!el)return;
+  const hD=dim&&!dim.startsWith('—'),hC=capinst.trim().length>0,hCa=causa.trim().length>0;
+  if(!hD&&!hC&&!hCa){el.innerHTML='<span class="blank">Complete los campos...</span>';return;}
+  el.innerHTML=`Se identifica una brecha en la dimensión de ${hD?`<span class="fill">${dim}</span>`:'<span class="blank">[dimensión]</span>'} que impacta la capacidad de ${hC?`<span class="fill">${capinst}</span>`:'<span class="blank">[capacidad]</span>'}, como consecuencia de ${hCa?`<span class="fill">${causa}</span>`:'<span class="blank">[causa]</span>'}.`;
+}
+
+// B4
+function initB4(){
+  document.getElementById('momento-grid').innerHTML=MOMENTOS.map(m=>`
+    <div class="momento-card">
+      <div class="momento-hdr"><span class="momento-icon">${m.icon}</span>
+        <span class="momento-title">${m.n}. ${m.title}</span></div>
+      <div class="momento-body">
+        <div class="momento-q">${m.q}</div>
+        <input class="momento-name-input" id="momento-name-${m.n}" placeholder="Nombre del participante..."
+          oninput="state.momentos['${m.n}']=this.value;chipM('${m.n}');debouncedSave()">
+        <div class="momento-nombre vacio" id="chip-${m.n}">Sin asignar</div>
+      </div>
+    </div>`).join('');
+}
+
+function restoreB4(){
+  Object.entries(state.momentos).forEach(([n,name])=>{
+    const el=document.getElementById(`momento-name-${n}`);
+    if(el){el.value=name;chipM(n);}
+  });
+  const rt=document.getElementById('relato-texto');
+  if(rt&&state.relatoTexto)rt.value=state.relatoTexto;
+}
+
+function chipM(n){
+  const val=document.getElementById(`momento-name-${n}`)?.value.trim();
+  const chip=document.getElementById(`chip-${n}`);if(!chip)return;
+  chip.textContent=val?'📹 '+val:'Sin asignar';
+  chip.className='momento-nombre '+(val?'asignado':'vacio');
+}
+
+function refreshBrechaSel(){
+  const sel=document.getElementById('brecha-sel');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— seleccionar brecha —</option>';
+  state.brechas.forEach((b,i)=>{
+    const dim=document.getElementById(`b${b.id}-dim`)?.value||b.dim||'';
+    if(dim&&!dim.startsWith('—'))
+      sel.innerHTML+=`<option value="${b.id}">${i+1}. ${dim}</option>`;
+  });
+  sel.value=cur;updateBrecha();
+}
+
+function updateBrecha(){
+  const id=parseInt(document.getElementById('brecha-sel').value);
+  const el=document.getElementById('brecha-texto');
+  if(!id){el.textContent='Seleccione una brecha del Bloque 3';el.style.fontStyle='italic';return;}
+  const dim=document.getElementById(`b${id}-dim`)?.value||'';
+  const capinst=document.getElementById(`b${id}-capinst`)?.value||'';
+  const causa=document.getElementById(`b${id}-causa`)?.value||'';
+  el.style.color='var(--navy)';el.style.fontStyle='normal';
+  el.textContent=`Se identifica una brecha en la dimensión de ${dim} que impacta la capacidad de ${capinst}, como consecuencia de ${causa}.`;
+}
+
+// EXPORT
+function exportBloque(num){
+  persist();
+  const sep='='.repeat(52),dash='-'.repeat(40);
+  const lines=['TALLER PETI 2027 — RESPUESTAS DEL PARTICIPANTE',sep,
+    `Participante: ${userName}`,`Exportado: ${new Date().toLocaleString('es-CO')}`,''];
+
+  if(num>=1){
+    lines.push('BLOQUE 1 · DIAGNÓSTICO — SEMÁFORO',dash);
+    DIMS.forEach(d=>{
+      const lv=state.semaforo[d.id];
+      lines.push(`${d.name}: ${lv?NLV[lv]:'Sin respuesta'}`);
+      const ev=state.evidencias[d.id];
+      if(ev&&ev.trim())lines.push(`  Evidencia: ${ev}`);
+    });
+    lines.push('');
+  }
+  if(num>=2){
+    lines.push('BLOQUE 2 · GALERÍA DE CAPACIDADES',dash);
+    CAPS.forEach(c=>{
+      const lv=state.capacidades[c.id];
+      lines.push(`${c.code} ${c.name}: ${lv?CLV[lv]:'Sin respuesta'}`);
+      const obs=state.obstaculos[c.id];
+      if(obs&&obs.trim())lines.push(`  Obstáculo: ${obs}`);
+    });
+    lines.push('');
+  }
+  if(num>=3){
+    lines.push('BLOQUE 3 · BRECHAS FORMULADAS',dash);
+    state.brechas.forEach((b,i)=>{
+      const dim=document.getElementById(`b${b.id}-dim`)?.value||b.dim||'';
+      const capinst=document.getElementById(`b${b.id}-capinst`)?.value||b.capinst||'';
+      const causa=document.getElementById(`b${b.id}-causa`)?.value||b.causa||'';
+      if(!dim&&!capinst&&!causa)return;
+      lines.push(`Brecha ${i+1}:`,`  Dimensión: ${dim}`,`  Capacidad: ${capinst}`,
+        `  Causa: ${causa}`,
+        `  Formulación: Se identifica una brecha en la dimensión de ${dim} que impacta la capacidad de ${capinst}, como consecuencia de ${causa}.`,'');
+    });
+  }
+  if(num>=4){
+    lines.push('BLOQUE 4 · RELATO ESTRATÉGICO',dash);
+    MOMENTOS.forEach(m=>{lines.push(`Momento ${m.n} — ${m.title}: ${state.momentos[m.n]||'Sin asignar'}`)});
+    const rt=document.getElementById('relato-texto')?.value||'';
+    if(rt)lines.push('','Notas del relato:',rt);
+    lines.push('');
+  }
+  lines.push(sep,'Taller PETI 2027 · ANH OTI');
+
+  const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const tag=num===4?'completo':`bloque${num}`;
+  a.download=`PETI2027_${userName.replace(/\s+/g,'_').toLowerCase()}_${tag}.txt`;
+  a.click();
+  showToast('✓ Archivo descargado — envíeselo a la facilitadora por Teams');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// INIT
+const hadData=restore();
+if(hadData&&userName){
+  document.getElementById('welcome-overlay').style.display='none';
+  document.getElementById('nav-user').innerHTML=`👤 <strong>${userName}</strong>`;
+  renderAll();
+}else{
+  if(userName)document.getElementById('nombre-input').value=userName;
+  setTimeout(()=>document.getElementById('nombre-input').focus(),300);
+}
+</script>
+</body>
+</html>
